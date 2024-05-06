@@ -31,15 +31,17 @@ sem_t room;
 sem_t guest_done[NUM_GUESTS];
 
 int current_guest_id;
-
+// make small fixes for checkout
 void *guest(void *arg) {
   int guest_id = *(int *)arg;
+
+  sem_wait(&room);
   printf("Guest %d enters the hotel.\n", guest_id);
   // Mutual exclusion only one guest can check in at a time
+  //
   sem_wait(&check_in_proceed);
   totalGuests++;
   printf("Guest %d goes to the check-in reservationist.\n", guest_id);
-  sem_wait(&room);
   current_guest_id = guest_id;
   sem_post(&check_in_ready);
 
@@ -48,7 +50,7 @@ void *guest(void *arg) {
   printf("Guest %d receives Room  and completes check-in.\n", guest_id);
   sem_post(&check_in_proceed);
   // Hotel activity
-  int activity_num = (rand() % 4) + 1;
+  int activity_num = (rand() % 4 + 1);
   if (activity_num == 1) {
     printf("Guest %d goes to the swimming pool.\n", guest_id);
     poolCount++;
@@ -74,9 +76,10 @@ void *guest(void *arg) {
   // Can't enter checkout until check-in done and activity done
   printf("Guest %d goes to the check-out reservationist and returns Room %d.\n",
          guest_id, guest_rooms[guest_id]);
+
+  sem_wait(&check_out_sem);
   printf("Guest %d receives the receipt.\n", guest_id);
   sem_wait(&check_out_done);
-  sem_wait(&check_out_sem);
 
   return NULL;
 }
